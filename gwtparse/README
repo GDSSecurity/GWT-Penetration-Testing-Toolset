@@ -1,0 +1,80 @@
+GwtParse v0.2
+
+For a detailed explaination of the tool see http://www.gdssecurity.com/l/b/2010/05/03/fuzzing-gwt-rpc-requests/
+
+Any issues encountered when using the tool should be sent to rgutierrez@gdssecurity.com
+
+Files Included:
+
+	gwtparse.py: Command Line interface to parse GWT RPC request and identify all fuzzable values
+	GWTParse.py: Modules containing all parsing logic which can be used within your own python code
+	Parameter.py: Simple Python object which is used by GWTParse to store RPC method parameters
+	
+Important Note:
+	When using the -b flag it is noted that the proper unicode symbol will only be properly display within
+	terminals which allow unicode characters ( Linux, Cygwin rxvt ). When using on windows the the output
+	can be written to a text file using the "-w" or "-a" options in order to properly view the output.
+	
+	
+===============================	
+Command Line Usage Examples
+===============================
+
+Identify all fuzzable values in the GWT RPC Request Payload using the default output format
+> python gwtparse.py -i "<RPC STRING>"
+
+Surrounds fuzzable value with the "Section" symbol for use within Burp Intruder
+> python gwtparse.py -i "<RPC STRING>" -b
+
+Surrounds fuzzable value with the user defined value for use within custom fuzzer
+> python gwtparse.py -i "<RPC STRING>" -s "<fuzz me>"
+
+Replaces fuzzable value with the user defined value for use within custom fuzzer
+> python gwtparse.py -i "<RPC STRING>" -r "<fuzz me>"
+
+Parses RPC String and displays output in a pretty format in order to better understand the values passed
+> python gwtparse.py -i "<RPC STRING>" -p 
+
+Writes output to file ( File must not already exist )
+> python gwtparse.py -i "<RPC STRING>" -w "outfile.txt"
+
+Appends output to file
+> python gwtparse.py -i "<RPC STRING>" -a "outfile.txt"
+
+
+
+================================
+	GWTParse Module Usage
+================================
+
+The GWTParser.py and Parameter.py files should be placed in a directory within your python path and imported into your python code
+
+These must be performed in the following order.
+
+Create Object
+	gwt = GWTParser()
+	
+Specify surround, replace or burp output format ( If none specified the default format is used )
+	gwt.surround_value = <STRING VALUE>
+	or
+	gwt.replace_value = <STRING VALUE>
+	or
+	gwt.burp = True
+	
+Specify file output handler ( If you want to write to output, default is standard output )
+	gwt.fout = < FILE OUTPUT HANDLER >
+	
+Deserialize the rpc request
+	gwt.deserialize( <ADD RPC PAYLOAD HERE> )
+
+Display Pretty Output
+	gwt.display()
+	
+Return fuzz string
+	gwt.get_fuzzstr()
+	
+Data Access
+	Service Name:   gwt.rpc_deserialized[2]
+	Method Name:	gwt.rpc_deserialize[3]
+	Method Parameters:	gwt.parameters
+

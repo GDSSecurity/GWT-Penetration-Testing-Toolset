@@ -1,0 +1,13 @@
+
+GwtFuzzer v0.1
+
+This is a proof of concept fuzzer which was presented at OWASP Appsec DC. This script
+utilizes the GDS Burp API and GWTParser class in order to filter out GWT RPC requests
+from a Burp Proxy log and programmatically fuzz user-input. The presentation can be
+downloaded at http://www.owasp.org/images/7/77/Attacking_Google_Web_Toolkit.ppt.
+
+GDS Burp API can be downloaded here: http://mwielgoszewski.github.com/burpee/
+
+
+NOTE:
+Both Libraries must be added to your PYTHONPATH.
