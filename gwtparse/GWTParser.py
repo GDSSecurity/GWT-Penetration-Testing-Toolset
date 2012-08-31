@@ -72,6 +72,15 @@ ListTypes = [ ARRAYLIST, LINKEDLIST, VECTOR ]
 prev_index = 0
 INDENTATION = 15
 
+# Indicates that obfuscated type names should be used in the RPC payload.
+FLAG_ELIDE_TYPE_NAMES = 0x1
+
+# Indicates that RPC token is included in the RPC payload.
+FLAG_RPC_TOKEN_INCLUDED = 0x2
+
+# Bit mask representing all valid flags.
+VALID_FLAGS_MASK = 0x3
+
 class GWTParser(object):
     
     def _cleanup(self):
@@ -82,7 +91,7 @@ class GWTParser(object):
         self.data_types = []
         self.parameters = []
         self.stream_version = 0
-        self.flags = ""
+        self.flags = 0
         self.columns = 0
         self.parameter_idx = 0
         self.fuzzmarked = dict()
@@ -588,7 +597,7 @@ class GWTParser(object):
     def _get_headers(self):
         try:
             self.stream_version = int(self.rpc_list.pop(0))
-            self.flags = self.rpc_list.pop(0)
+            self.flags = int(self.rpc_list.pop(0))
             self.columns = int(self.rpc_list.pop(0))
         except TypeError:
             print ("Invalid Integer given for the stream_version or number of columns")
@@ -666,8 +675,20 @@ class GWTParser(object):
         Store the first four values
         Hostname, Hash, Class Name, Method
         '''
-        for i in range(4):
-            self.rpc_deserialized.append(self._get_nextval())
+        # rpc request has an rpc/xsrf token
+        if (self.flags & FLAG_RPC_TOKEN_INCLUDED):
+            self.rpc_deserialized.append(self._get_nextval()) # hostname
+            self.rpc_deserialized.append(self._get_nextval()) # strong name
+            
+            self.rpc_token = {}
+            self.rpc_token[self._get_nextval()] = self._get_nextval()
+            
+            self.rpc_deserialized.append(self._get_nextval()) # interface
+            self.rpc_deserialized.append(self._get_nextval()) # method
+        
+        else:
+            for i in range(4):
+                self.rpc_deserialized.append(self._get_nextval())
         
         for index in self.indices:
             num_of_params = self._pop_index() # Number of Method parameters
@@ -715,7 +736,7 @@ class GWTParser(object):
             self.fout.write("==================================\n")
             self.fout.write(str("Serialized Object:").rjust(INDENTATION) + "\n" + self.rpc_string + "\n\n")
             self.fout.write(str("Stream Version:").rjust(INDENTATION) + "\t" + str(self.stream_version)+"\n")
-            self.fout.write(str("Flags:").rjust(INDENTATION) + "\t" + self.flags+"\n")
+            self.fout.write(str("Flags:").rjust(INDENTATION) + "\t" + str(self.flags+"\n"))
             self.fout.write(str("Column Numbers:").rjust(INDENTATION) + "\t" + str(self.columns)+"\n")
             self.fout.write(str("Host:").rjust(INDENTATION) + "\t" + self.rpc_deserialized[0]+"\n")
             self.fout.write(str("Hash:").rjust(INDENTATION) + "\t" + self.rpc_deserialized[1]+"\n")
@@ -726,7 +747,7 @@ class GWTParser(object):
         else:   
             print (str("\nSerialized Object:").rjust(INDENTATION) + "\n" + self.rpc_string + "\n")
             print (str("Stream Version:").rjust(INDENTATION) + "\t" + str(self.stream_version))
-            print (str("Flags:").rjust(INDENTATION) + "\t" + self.flags)
+            print (str("Flags:").rjust(INDENTATION) + "\t" + str(self.flags))
             print (str("Column Numbers:").rjust(INDENTATION) + "\t" + str(self.columns))
             print (str("Host:").rjust(INDENTATION) + "\t" + self.rpc_deserialized[0])
             print (str("Hash:").rjust(INDENTATION) + "\t" + self.rpc_deserialized[1])
